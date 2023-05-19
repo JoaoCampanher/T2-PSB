@@ -8,7 +8,7 @@
             "name": "Build and debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/loader",
+            "program": "${workspaceFolder}\\quadtree.exe",
             "args": ["star.png"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
