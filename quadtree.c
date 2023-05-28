@@ -1,6 +1,7 @@
 #include "quadtree.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -40,7 +41,7 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     {
         for (int i = 0; i < height; i++)
         {
-            int intensity = 0.3 * pixels[i][j].r + 0.59 * pixels[i][j].g + 0.11 * pixels[i][j].b;
+            int intensity = round(0.3 * pixels[i][j].r + 0.59 * pixels[i][j].g + 0.11 * pixels[i][j].b);
             pixels[i][j].r = intensity;
             pixels[i][j].g = intensity;
             pixels[i][j].b = intensity;
