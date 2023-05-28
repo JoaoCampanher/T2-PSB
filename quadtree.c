@@ -37,6 +37,8 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
 
+    int histogram[256] = {0};
+
     for (int j = 0; j < width; j++)
     {
         for (int i = 0; i < height; i++)
@@ -45,6 +47,8 @@ QuadNode *geraQuadtree(Img *pic, float minError)
             pixels[i][j].r = intensity;
             pixels[i][j].g = intensity;
             pixels[i][j].b = intensity;
+
+            histogram[intensity]++;
         }
     }
 
