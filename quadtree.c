@@ -9,6 +9,10 @@
 #include <GL/gl.h> /* OpenGL functions */
 #endif
 
+void grayTonesImage(int width, int height, RGBPixel *pixels);
+int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels);
+int getIndex(int i, int j, int width);
+
 unsigned int first = 1;
 char desenhaBorda = 1;
 
@@ -37,24 +41,45 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
 
-    int histogram[256] = {0};
+    grayTonesImage(width, height, &pixels[0][0]);
+    printf("%d ", getMediumIntensity(0, 0, width, height, &pixels[0][0]));
+
+    QuadNode *raiz = newNode(0, 0, width, height);
+
+    return raiz;
+}
+
+void grayTonesImage(int width, int height, RGBPixel *pixels)
+{
+    for (int j = 0; j < width; j++)
+    {
+        for (int i = 0; i < height; i++)
+        {
+            int intensity = round(0.3 * pixels[getIndex(i, j, width)].r + 0.59 * pixels[getIndex(i, j, width)].g + 0.11 * pixels[getIndex(i, j, width)].b);
+            pixels[getIndex(i, j, width)].r = intensity;
+            pixels[getIndex(i, j, width)].g = intensity;
+            pixels[getIndex(i, j, width)].b = intensity;
+        }
+    }
+}
+
+int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels)
+{
+    long intensitySum = 0;
 
     for (int j = 0; j < width; j++)
     {
         for (int i = 0; i < height; i++)
         {
-            int intensity = round(0.3 * pixels[i][j].r + 0.59 * pixels[i][j].g + 0.11 * pixels[i][j].b);
-            pixels[i][j].r = intensity;
-            pixels[i][j].g = intensity;
-            pixels[i][j].b = intensity;
-
-            histogram[intensity]++;
+            intensitySum += pixels[getIndex(i, j, width)].r;
         }
     }
+    return intensitySum / (width * height);
+}
 
-    QuadNode *raiz = newNode(0, 0, width, height);
-
-    return raiz;
+int getIndex(int i, int j, int width)
+{
+    return i * width + j;
 }
 
 // Limpa a memória ocupada pela árvore
