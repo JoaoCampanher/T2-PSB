@@ -10,9 +10,10 @@
 #endif
 
 void grayTonesImage(int width, int height, RGBPixel *pixels);
-int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels);
+float getMediumIntensity(float x, float y, float width, float height, RGBPixel *pixels);
 int getIndex(int i, int j, int width);
-float getZoneError(int x, int y, int width, int height, RGBPixel *pixels);
+float getZoneError(float x, float y, float width, float height, RGBPixel *pixels);
+void separeTree(QuadNode *node, RGBPixel *pixels, int minError);
 
 unsigned int first = 1;
 char desenhaBorda = 1;
@@ -43,10 +44,11 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     //////////////////////////////////////////////////////////////////////////
 
     grayTonesImage(width, height, &pixels[0][0]);
-    printf("%f ", getZoneError(0, 0, width, height, &pixels[0][0]));
-
     QuadNode *raiz = newNode(0, 0, width, height);
+    raiz->status = PARCIAL;
 
+    printf("%f", getMediumIntensity(width/2, 0, width/2, height/2, &pixels[0][0]));
+    separeTree(raiz, &pixels[0][0], minError);
     return raiz;
 }
 
@@ -64,13 +66,13 @@ void grayTonesImage(int width, int height, RGBPixel *pixels)
     }
 }
 
-int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels)
+float getMediumIntensity(float x, float y, float width, float height, RGBPixel *pixels)
 {
     long intensitySum = 0;
 
-    for (int j = x; j < width; j++)
+    for (int j = x; j < x + width; j++)
     {
-        for (int i = y; i < height; i++)
+        for (int i = y; i < y + height; i++)
         {
             intensitySum += pixels[getIndex(i, j, width)].r;
         }
@@ -78,14 +80,14 @@ int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels)
     return intensitySum / (width * height);
 }
 
-float getZoneError(int x, int y, int width, int height, RGBPixel *pixels)
+float getZoneError(float x, float y, float width, float height, RGBPixel *pixels)
 {
-    int mediumIntensity = getMediumIntensity(0, 0, width, height, pixels);
+    int mediumIntensity = getMediumIntensity(x, y, width, height, pixels);
     float summation = 0;
 
-    for (int j = x; j < width; j++)
+    for (int j = x; j < x + width; j++)
     {
-        for (int i = y; i < height; i++)
+        for (int i = y; i < y + height; i++)
         {
             summation += pow((pixels[getIndex(i, j, width)].r - mediumIntensity), 2) / (width * height);
         }
@@ -97,6 +99,60 @@ float getZoneError(int x, int y, int width, int height, RGBPixel *pixels)
 int getIndex(int i, int j, int width)
 {
     return i * width + j;
+}
+
+
+void separeTree(QuadNode *node, RGBPixel *pixels, int minError)
+{
+    if (getZoneError(node->x, node->y, node->width, node->height, pixels) > minError )
+    {
+        float halfWidth = (node->width) / 2;
+        float halfHeight = (node->height) / 2;
+        float x = node->x;
+        float y = node->y;
+
+        QuadNode *nw = newNode(x, y, halfWidth, halfHeight);
+        int nwIntensity = getMediumIntensity(x, y, halfWidth, halfHeight, pixels);
+        nw->status = PARCIAL;
+        nw->color[0] = nwIntensity;
+        nw->color[1] = nwIntensity;
+        nw->color[2] = nwIntensity;
+
+        QuadNode *ne = newNode(x + halfWidth, y, halfWidth, halfHeight);
+        int neIntensity = getMediumIntensity(x + halfWidth, y, halfWidth, halfHeight, pixels);
+        ne->status = PARCIAL;
+        ne->color[0] = neIntensity;
+        ne->color[1] = neIntensity;
+        ne->color[2] = neIntensity;
+
+        QuadNode *sw = newNode(x, y + halfHeight, halfWidth, halfHeight);
+        int swIntensity = getMediumIntensity(x, y + halfHeight, halfWidth, halfHeight, pixels);
+        sw->status = PARCIAL;
+        sw->color[0] = swIntensity;
+        sw->color[1] = swIntensity;
+        sw->color[2] = swIntensity;
+
+        QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+        int seIntensity = getMediumIntensity(x + halfWidth, y + halfHeight, halfWidth, halfHeight, pixels);
+        se->status = PARCIAL;
+        se->color[0] = seIntensity;
+        se->color[1] = seIntensity;
+        se->color[2] = seIntensity;
+
+        node->NW = nw;
+        node->NE = ne;
+        node->SW = sw;
+        node->SE = se;
+
+        separeTree(node->NW, pixels, minError);
+        separeTree(node->NE, pixels, minError);
+        separeTree(node->SW, pixels, minError);
+        separeTree(node->SE, pixels, minError);
+    }
+    else
+    {
+        node->status = CHEIO;
+    }
 }
 
 // Limpa a memória ocupada pela árvore
