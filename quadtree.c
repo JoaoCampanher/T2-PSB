@@ -12,6 +12,7 @@
 void grayTonesImage(int width, int height, RGBPixel *pixels);
 int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels);
 int getIndex(int i, int j, int width);
+float getZoneError(int x, int y, int width, int height, RGBPixel *pixels);
 
 unsigned int first = 1;
 char desenhaBorda = 1;
@@ -42,7 +43,7 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     //////////////////////////////////////////////////////////////////////////
 
     grayTonesImage(width, height, &pixels[0][0]);
-    printf("%d ", getMediumIntensity(0, 0, width, height, &pixels[0][0]));
+    printf("%f ", getZoneError(0, 0, width, height, &pixels[0][0]));
 
     QuadNode *raiz = newNode(0, 0, width, height);
 
@@ -67,14 +68,30 @@ int getMediumIntensity(int x, int y, int width, int height, RGBPixel *pixels)
 {
     long intensitySum = 0;
 
-    for (int j = 0; j < width; j++)
+    for (int j = x; j < width; j++)
     {
-        for (int i = 0; i < height; i++)
+        for (int i = y; i < height; i++)
         {
             intensitySum += pixels[getIndex(i, j, width)].r;
         }
     }
     return intensitySum / (width * height);
+}
+
+float getZoneError(int x, int y, int width, int height, RGBPixel *pixels)
+{
+    int mediumIntensity = getMediumIntensity(0, 0, width, height, pixels);
+    float summation = 0;
+
+    for (int j = x; j < width; j++)
+    {
+        for (int i = y; i < height; i++)
+        {
+            summation += pow((pixels[getIndex(i, j, width)].r - mediumIntensity), 2) / (width * height);
+        }
+    }
+    float result = sqrt(summation);
+    return result;
 }
 
 int getIndex(int i, int j, int width)
