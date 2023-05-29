@@ -14,8 +14,6 @@ float getMediumIntensity(float x, float y, float width, float height, RGBPixel *
 int getIndex(int i, int j, int width);
 float getZoneError(float x, float y, float width, float height, RGBPixel *pixels, float totalWidth);
 void separeTree(QuadNode *node, RGBPixel *pixels, int minError, float totalWidth);
-void changePixel(int row, int column, int width, RGBPixel *pixels);
-
 
 unsigned int first = 1;
 char desenhaBorda = 1;
@@ -51,13 +49,6 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     separeTree(raiz, &pixels[0][0], minError, width);
 
     return raiz;
-}
-
-void changePixel(int row, int column, int width, RGBPixel *pixels)
-{
-    pixels[getIndex(row, column, width)].r = 255;
-    pixels[getIndex(row, column, width)].g = 192;
-    pixels[getIndex(row, column, width)].b = 203;
 }
 
 void grayTonesImage(int width, int height, RGBPixel *pixels)
