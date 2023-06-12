@@ -9,14 +9,17 @@
 #include <GL/gl.h> /* OpenGL functions */
 #endif
 
-void grayTonesImage(int width, int height, RGBPixel *pixels);
-float getMediumIntensity(float x, float y, float width, float height, RGBPixel *pixels, float totalWidth);
+void grayTonesImage();
+float getMediumIntensity(float x, float y, float width, float height);
 int getIndex(int i, int j, int width);
-float getZoneError(float x, float y, float width, float height, RGBPixel *pixels, float totalWidth);
-void separeTree(QuadNode *node, RGBPixel *pixels, int minError, float totalWidth);
+float getZoneError(float x, float y, float width, float height);
+void separeTree(QuadNode *node, int minError);
 
 unsigned int first = 1;
 char desenhaBorda = 1;
+int totalWidth;
+int totalHeight;
+RGBPixel *pixelsRGB;
 
 QuadNode *newNode(int x, int y, int width, int height)
 {
@@ -36,36 +39,37 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
     RGBPixel(*pixels)[pic->width] = (RGBPixel(*)[pic->height])pic->img;
 
-    int width = pic->width;
-    int height = pic->height;
-
+    totalWidth = pic->width;
+    totalHeight = pic->height;
+    pixelsRGB = &pixels[0][0];
     //////////////////////////////////////////////////////////////////////////
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
 
-    grayTonesImage(width, height, &pixels[0][0]);
-    QuadNode *raiz = newNode(0, 0, width, height);
+    grayTonesImage();
+    QuadNode *raiz = newNode(0, 0, totalWidth, totalHeight);
     raiz->status = PARCIAL;
-    separeTree(raiz, &pixels[0][0], minError, width);
+    separeTree(raiz, minError);
 
     return raiz;
 }
 
-void grayTonesImage(int width, int height, RGBPixel *pixels)
+void grayTonesImage()
 {
-    for (int row = 0; row < height; row++)
+    for (int row = 0; row < totalHeight; row++)
     {
-        for (int column = 0; column < width; column++)
+        for (int column = 0; column < totalWidth; column++)
         {
-            int intensity = round(0.3 * pixels[getIndex(row, column, width)].r + 0.59 * pixels[getIndex(row, column, width)].g + 0.11 * pixels[getIndex(row, column, width)].b);
-            pixels[getIndex(row, column, width)].r = intensity;
-            pixels[getIndex(row, column, width)].g = intensity;
-            pixels[getIndex(row, column, width)].b = intensity;
+            int index = getIndex(row, column, totalWidth);
+            int intensity = round(0.3 * pixelsRGB[index].r + 0.59 * pixelsRGB[index].g + 0.11 * pixelsRGB[index].b);
+            pixelsRGB[index].r = intensity;
+            pixelsRGB[index].g = intensity;
+            pixelsRGB[index].b = intensity;
         }
     }
 }
 
-float getMediumIntensity(float x, float y, float width, float height, RGBPixel *pixels, float totalWidth)
+float getMediumIntensity(float x, float y, float width, float height)
 {
     long intensitySum = 0;
 
@@ -73,22 +77,22 @@ float getMediumIntensity(float x, float y, float width, float height, RGBPixel *
     {
         for (int column = x; column < x + width; column++)
         {
-            intensitySum += pixels[getIndex(row, column, totalWidth)].r;
+            intensitySum += pixelsRGB[getIndex(row, column, totalWidth)].r;
         }
     }
     return intensitySum / (width * height);
 }
 
-float getZoneError(float x, float y, float width, float height, RGBPixel *pixels, float totalWidth)
+float getZoneError(float x, float y, float width, float height)
 {
-    int mediumIntensity = getMediumIntensity(x, y, width, height, pixels, totalWidth);
+    int mediumIntensity = getMediumIntensity(x, y, width, height);
     float summation = 0;
 
     for (int row = y; row < y + height; row++)
     {
         for (int column = x; column < x + width; column++)
         {
-            summation += pow((pixels[getIndex(row, column, totalWidth)].r - mediumIntensity), 2) / (width * height);
+            summation += pow((pixelsRGB[getIndex(row, column, totalWidth)].r - mediumIntensity), 2) / (width * height);
         }
     }
     float result = sqrt(summation);
@@ -100,9 +104,9 @@ int getIndex(int row, int column, int width)
     return row * width + column;
 }
 
-void separeTree(QuadNode *node, RGBPixel *pixels, int minError, float totalWidth)
+void separeTree(QuadNode *node, int minError)
 {
-    if (getZoneError(node->x, node->y, node->width, node->height, pixels, totalWidth) > minError)
+    if (getZoneError(node->x, node->y, node->width, node->height) > minError)
     {
         float halfWidth = (node->width) / 2;
         float halfHeight = (node->height) / 2;
@@ -110,28 +114,28 @@ void separeTree(QuadNode *node, RGBPixel *pixels, int minError, float totalWidth
         float y = node->y;
 
         QuadNode *nw = newNode(x, y, halfWidth, halfHeight);
-        int nwIntensity = getMediumIntensity(x, y, halfWidth, halfHeight, pixels, totalWidth);
+        int nwIntensity = getMediumIntensity(x, y, halfWidth, halfHeight);
         nw->status = PARCIAL;
         nw->color[0] = nwIntensity;
         nw->color[1] = nwIntensity;
         nw->color[2] = nwIntensity;
 
         QuadNode *ne = newNode(x + halfWidth, y, halfWidth, halfHeight);
-        int neIntensity = getMediumIntensity(x + halfWidth, y, halfWidth, halfHeight, pixels, totalWidth);
+        int neIntensity = getMediumIntensity(x + halfWidth, y, halfWidth, halfHeight);
         ne->status = PARCIAL;
         ne->color[0] = neIntensity;
         ne->color[1] = neIntensity;
         ne->color[2] = neIntensity;
 
         QuadNode *sw = newNode(x, y + halfHeight, halfWidth, halfHeight);
-        int swIntensity = getMediumIntensity(x, y + halfHeight, halfWidth, halfHeight, pixels, totalWidth);
+        int swIntensity = getMediumIntensity(x, y + halfHeight, halfWidth, halfHeight);
         sw->status = PARCIAL;
         sw->color[0] = swIntensity;
         sw->color[1] = swIntensity;
         sw->color[2] = swIntensity;
 
         QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
-        int seIntensity = getMediumIntensity(x + halfWidth, y + halfHeight, halfWidth, halfHeight, pixels, totalWidth);
+        int seIntensity = getMediumIntensity(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
         se->status = PARCIAL;
         se->color[0] = seIntensity;
         se->color[1] = seIntensity;
@@ -142,10 +146,10 @@ void separeTree(QuadNode *node, RGBPixel *pixels, int minError, float totalWidth
         node->SW = sw;
         node->SE = se;
 
-        separeTree(node->NW, pixels, minError, totalWidth);
-        separeTree(node->NE, pixels, minError, totalWidth);
-        separeTree(node->SW, pixels, minError, totalWidth);
-        separeTree(node->SE, pixels, minError, totalWidth);
+        separeTree(node->NW, minError);
+        separeTree(node->NE, minError);
+        separeTree(node->SW, minError);
+        separeTree(node->SE, minError);
     }
     else
     {
