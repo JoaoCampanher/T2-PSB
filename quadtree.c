@@ -19,7 +19,7 @@ unsigned int first = 1;
 char desenhaBorda = 1;
 int totalWidth;
 int totalHeight;
-RGBPixel *pixelsRGB;
+RGBPixel *pixels;
 
 QuadNode *newNode(int x, int y, int width, int height)
 {
@@ -37,11 +37,11 @@ QuadNode *newNode(int x, int y, int width, int height)
 QuadNode *geraQuadtree(Img *pic, float minError)
 {
     // Converte o vetor RGBPixel para uma MATRIZ que pode acessada por pixels[linha][coluna]
-    RGBPixel(*pixels)[pic->width] = (RGBPixel(*)[pic->height])pic->img;
+    RGBPixel(*pixelsRGB)[pic->width] = (RGBPixel(*)[pic->height])pic->img;
 
     totalWidth = pic->width;
     totalHeight = pic->height;
-    pixelsRGB = &pixels[0][0];
+    pixels = &pixelsRGB[0][0];
     //////////////////////////////////////////////////////////////////////////
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
@@ -61,10 +61,10 @@ void grayTonesImage()
         for (int column = 0; column < totalWidth; column++)
         {
             int index = getIndex(row, column, totalWidth);
-            int intensity = round(0.3 * pixelsRGB[index].r + 0.59 * pixelsRGB[index].g + 0.11 * pixelsRGB[index].b);
-            pixelsRGB[index].r = intensity;
-            pixelsRGB[index].g = intensity;
-            pixelsRGB[index].b = intensity;
+            int intensity = round(0.3 * pixels[index].r + 0.59 * pixels[index].g + 0.11 * pixels[index].b);
+            pixels[index].r = intensity;
+            pixels[index].g = intensity;
+            pixels[index].b = intensity;
         }
     }
 }
@@ -77,7 +77,7 @@ float getMediumIntensity(float x, float y, float width, float height)
     {
         for (int column = x; column < x + width; column++)
         {
-            intensitySum += pixelsRGB[getIndex(row, column, totalWidth)].r;
+            intensitySum += pixels[getIndex(row, column, totalWidth)].r;
         }
     }
     return intensitySum / (width * height);
@@ -92,7 +92,7 @@ float getZoneError(float x, float y, float width, float height)
     {
         for (int column = x; column < x + width; column++)
         {
-            summation += pow((pixelsRGB[getIndex(row, column, totalWidth)].r - mediumIntensity), 2) / (width * height);
+            summation += pow((pixels[getIndex(row, column, totalWidth)].r - mediumIntensity), 2) / (width * height);
         }
     }
     float result = sqrt(summation);
