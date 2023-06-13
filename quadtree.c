@@ -170,20 +170,13 @@ void separeTree(QuadNode *node, int minError)
     int *histogram = generateHistogram(node->x, node->y, node->width, node->height);
 
     int error = getZoneError(histogram, node->x, node->y, node->width, node->height);
+    int halfWidth = (node->width) / 2;
+    int halfHeight = (node->height) / 2;
+    int x = node->x;
+    int y = node->y;
 
-    if (error > minError)
+    if (error > minError && halfHeight != 0 && halfWidth != 0)
     {
-
-        int halfWidth = (node->width) / 2;
-        int halfHeight = (node->height) / 2;
-        int x = node->x;
-        int y = node->y;
-        // printf("\n%d ", error);
-        // printf("%d ", halfWidth);
-        // printf("%d ", halfHeight);
-        // printf("%d ", x);
-        // printf("%d ", y);
-
         QuadNode *nw = newNode(x, y, halfWidth, halfHeight);
         averageRed = getAverageRedColor(x, y, halfWidth, halfHeight);
         averageGreen = getAverageGreenColor(x, y, halfWidth, halfHeight);
