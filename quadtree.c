@@ -9,11 +9,15 @@
 #include <GL/gl.h> /* OpenGL functions */
 #endif
 
-void grayTonesImage();
-float getMediumIntensity(float x, float y, float width, float height);
 int getIndex(int i, int j, int width);
-float getZoneError(float x, float y, float width, float height);
 void separeTree(QuadNode *node, int minError);
+int *generateHistogram(int x, int y, int width, int height);
+int getGrayTone(int r, int g, int b);
+int getAverageRedColor(int x, int y, int width, int height);
+int getAverageBlueColor(int x, int y, int width, int height);
+int getAverageGreenColor(int x, int y, int width, int height);
+int getZoneError(int histogram[], int x, int y, int width, int height);
+int averageIntensity(int histogram[]);
 
 unsigned int first = 1;
 char desenhaBorda = 1;
@@ -46,7 +50,7 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     // Implemente aqui o algoritmo que gera a quadtree, retornando o nodo raiz
     //////////////////////////////////////////////////////////////////////////
 
-    grayTonesImage();
+    // grayTonesImage();
     QuadNode *raiz = newNode(0, 0, totalWidth, totalHeight);
     raiz->status = PARCIAL;
     separeTree(raiz, minError);
@@ -54,22 +58,34 @@ QuadNode *geraQuadtree(Img *pic, float minError)
     return raiz;
 }
 
-void grayTonesImage()
+int *generateHistogram(int x, int y, int width, int height)
 {
-    for (int row = 0; row < totalHeight; row++)
+    int *histogram = malloc(256 * sizeof(int));
+
+    for (int i = 0; i < 256; i++)
     {
-        for (int column = 0; column < totalWidth; column++)
+        histogram[i] = 0;
+    }
+
+    for (int row = y; row < y + height; row++)
+    {
+        for (int column = x; column < x + width; column++)
         {
             int index = getIndex(row, column, totalWidth);
-            int intensity = round(0.3 * pixels[index].r + 0.59 * pixels[index].g + 0.11 * pixels[index].b);
-            pixels[index].r = intensity;
-            pixels[index].g = intensity;
-            pixels[index].b = intensity;
+            int intensity = getGrayTone(pixels[index].r, pixels[index].g, pixels[index].b);
+            histogram[intensity]++;
         }
     }
+
+    return histogram;
 }
 
-float getMediumIntensity(float x, float y, float width, float height)
+int getGrayTone(int r, int g, int b)
+{
+    return round(0.3 * r + 0.59 * g + 0.11 * b);
+}
+
+int getAverageRedColor(int x, int y, int width, int height)
 {
     long intensitySum = 0;
 
@@ -83,20 +99,61 @@ float getMediumIntensity(float x, float y, float width, float height)
     return intensitySum / (width * height);
 }
 
-float getZoneError(float x, float y, float width, float height)
+int getAverageBlueColor(int x, int y, int width, int height)
 {
-    int mediumIntensity = getMediumIntensity(x, y, width, height);
-    float summation = 0;
+    long intensitySum = 0;
 
     for (int row = y; row < y + height; row++)
     {
         for (int column = x; column < x + width; column++)
         {
-            summation += pow((pixels[getIndex(row, column, totalWidth)].r - mediumIntensity), 2) / (width * height);
+            intensitySum += pixels[getIndex(row, column, totalWidth)].b;
         }
     }
-    float result = sqrt(summation);
-    return result;
+    return intensitySum / (width * height);
+}
+
+int getAverageGreenColor(int x, int y, int width, int height)
+{
+    long intensitySum = 0;
+
+    for (int row = y; row < y + height; row++)
+    {
+        for (int column = x; column < x + width; column++)
+        {
+            intensitySum += pixels[getIndex(row, column, totalWidth)].g;
+        }
+    }
+    return intensitySum / (width * height);
+}
+
+int getZoneError(int histogram[], int x, int y, int width, int height)
+{
+    int averageI = averageIntensity(histogram);
+    int grayTone;
+    long long sum = 0;
+    for (int row = y; row < y + height; row++)
+    {
+        for (int column = x; column < x + width; column++)
+        {
+            int index = getIndex(row, column, totalWidth);
+            grayTone = getGrayTone(pixels[index].r, pixels[index].g, pixels[index].b);
+            sum += pow((grayTone - averageI), 2);
+        }
+    }
+    return sum / (width * height);
+}
+
+int averageIntensity(int histogram[])
+{
+    long long sum = 0;
+    int quantity = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        sum += histogram[i] * i;
+        quantity += histogram[i];
+    }
+    return sum / quantity;
 }
 
 int getIndex(int row, int column, int width)
@@ -106,40 +163,62 @@ int getIndex(int row, int column, int width)
 
 void separeTree(QuadNode *node, int minError)
 {
-    if (getZoneError(node->x, node->y, node->width, node->height) > minError)
+    int averageRed = getAverageRedColor(node->x, node->y, node->width, node->height);
+    int averageBlue = getAverageBlueColor(node->x, node->y, node->width, node->height);
+    int averageGreen = getAverageGreenColor(node->x, node->y, node->width, node->height);
+
+    int *histogram = generateHistogram(node->x, node->y, node->width, node->height);
+
+    int error = getZoneError(histogram, node->x, node->y, node->width, node->height);
+
+    if (error > minError)
     {
-        float halfWidth = (node->width) / 2;
-        float halfHeight = (node->height) / 2;
-        float x = node->x;
-        float y = node->y;
+
+        int halfWidth = (node->width) / 2;
+        int halfHeight = (node->height) / 2;
+        int x = node->x;
+        int y = node->y;
+        // printf("\n%d ", error);
+        // printf("%d ", halfWidth);
+        // printf("%d ", halfHeight);
+        // printf("%d ", x);
+        // printf("%d ", y);
 
         QuadNode *nw = newNode(x, y, halfWidth, halfHeight);
-        int nwIntensity = getMediumIntensity(x, y, halfWidth, halfHeight);
+        averageRed = getAverageRedColor(x, y, halfWidth, halfHeight);
+        averageGreen = getAverageGreenColor(x, y, halfWidth, halfHeight);
+        averageBlue = getAverageBlueColor(x, y, halfWidth, halfHeight);
         nw->status = PARCIAL;
-        nw->color[0] = nwIntensity;
-        nw->color[1] = nwIntensity;
-        nw->color[2] = nwIntensity;
+        nw->color[0] = averageRed;
+        nw->color[1] = averageGreen;
+        nw->color[2] = averageBlue;
 
         QuadNode *ne = newNode(x + halfWidth, y, halfWidth, halfHeight);
-        int neIntensity = getMediumIntensity(x + halfWidth, y, halfWidth, halfHeight);
+        averageRed = getAverageRedColor(x + halfWidth, y, halfWidth, halfHeight);
+        averageGreen = getAverageGreenColor(x + halfWidth, y, halfWidth, halfHeight);
+        averageBlue = getAverageBlueColor(x + halfWidth, y, halfWidth, halfHeight);
         ne->status = PARCIAL;
-        ne->color[0] = neIntensity;
-        ne->color[1] = neIntensity;
-        ne->color[2] = neIntensity;
+        ne->color[0] = averageRed;
+        ne->color[1] = averageGreen;
+        ne->color[2] = averageBlue;
 
         QuadNode *sw = newNode(x, y + halfHeight, halfWidth, halfHeight);
-        int swIntensity = getMediumIntensity(x, y + halfHeight, halfWidth, halfHeight);
+        averageRed = getAverageRedColor(x, y + halfHeight, halfWidth, halfHeight);
+        averageGreen = getAverageGreenColor(x, y + halfHeight, halfWidth, halfHeight);
+        averageBlue = getAverageBlueColor(x, y + halfHeight, halfWidth, halfHeight);
         sw->status = PARCIAL;
-        sw->color[0] = swIntensity;
-        sw->color[1] = swIntensity;
-        sw->color[2] = swIntensity;
+        sw->color[0] = averageRed;
+        sw->color[1] = averageGreen;
+        sw->color[2] = averageBlue;
 
         QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
-        int seIntensity = getMediumIntensity(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+        averageRed = getAverageRedColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+        averageGreen = getAverageGreenColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+        averageBlue = getAverageBlueColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
         se->status = PARCIAL;
-        se->color[0] = seIntensity;
-        se->color[1] = seIntensity;
-        se->color[2] = seIntensity;
+        se->color[0] = averageRed;
+        se->color[1] = averageGreen;
+        se->color[2] = averageBlue;
 
         node->NW = nw;
         node->NE = ne;
@@ -155,6 +234,7 @@ void separeTree(QuadNode *node, int minError)
     {
         node->status = CHEIO;
     }
+    free(histogram);
 }
 
 // Limpa a memória ocupada pela árvore
