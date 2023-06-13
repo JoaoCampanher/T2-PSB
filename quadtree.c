@@ -13,11 +13,12 @@ int getIndex(int i, int j, int width);
 void separeTree(QuadNode *node, int minError);
 int *generateHistogram(int x, int y, int width, int height);
 int getGrayTone(int r, int g, int b);
-int getAverageRedColor(int x, int y, int width, int height);
-int getAverageBlueColor(int x, int y, int width, int height);
-int getAverageGreenColor(int x, int y, int width, int height);
 int getZoneError(int histogram[], int x, int y, int width, int height);
 int averageIntensity(int histogram[]);
+int getRedColor(int row, int column);
+int getGreenColor(int row, int column);
+int getBlueColor(int row, int column);
+int getAverageColor(int x, int y, int width, int height, int (*getColor)(int, int));
 
 unsigned int first = 1;
 char desenhaBorda = 1;
@@ -85,7 +86,7 @@ int getGrayTone(int r, int g, int b)
     return round(0.3 * r + 0.59 * g + 0.11 * b);
 }
 
-int getAverageRedColor(int x, int y, int width, int height)
+int getAverageColor(int x, int y, int width, int height, int (*getColor)(int, int))
 {
     long intensitySum = 0;
 
@@ -93,38 +94,25 @@ int getAverageRedColor(int x, int y, int width, int height)
     {
         for (int column = x; column < x + width; column++)
         {
-            intensitySum += pixels[getIndex(row, column, totalWidth)].r;
+            intensitySum += getColor(row, column);
         }
     }
     return intensitySum / (width * height);
 }
 
-int getAverageBlueColor(int x, int y, int width, int height)
+int getRedColor(int row, int column)
 {
-    long intensitySum = 0;
-
-    for (int row = y; row < y + height; row++)
-    {
-        for (int column = x; column < x + width; column++)
-        {
-            intensitySum += pixels[getIndex(row, column, totalWidth)].b;
-        }
-    }
-    return intensitySum / (width * height);
+    return pixels[getIndex(row, column, totalWidth)].r;
 }
 
-int getAverageGreenColor(int x, int y, int width, int height)
+int getGreenColor(int row, int column)
 {
-    long intensitySum = 0;
+    return pixels[getIndex(row, column, totalWidth)].g;
+}
 
-    for (int row = y; row < y + height; row++)
-    {
-        for (int column = x; column < x + width; column++)
-        {
-            intensitySum += pixels[getIndex(row, column, totalWidth)].g;
-        }
-    }
-    return intensitySum / (width * height);
+int getBlueColor(int row, int column)
+{
+    return pixels[getIndex(row, column, totalWidth)].b;
 }
 
 int getZoneError(int histogram[], int x, int y, int width, int height)
@@ -183,36 +171,37 @@ void separeTree(QuadNode *node, int minError)
         int heightOffset = ((int)node->height) % 2;
 
         QuadNode *nw = newNode(x, y, halfWidth + 1, halfHeight + 1);
-        averageRed = getAverageRedColor(x, y, halfWidth + 1, halfHeight + 1);
-        averageGreen = getAverageGreenColor(x, y, halfWidth + 1, halfHeight + 1);
-        averageBlue = getAverageBlueColor(x, y, halfWidth + 1, halfHeight + 1);
+
+        averageRed = getAverageColor(x, y, halfWidth + 1, halfHeight + 1, getRedColor);
+        averageGreen = getAverageColor(x, y, halfWidth + 1, halfHeight + 1, getGreenColor);
+        averageBlue = getAverageColor(x, y, halfWidth + 1, halfHeight + 1, getBlueColor);
         nw->status = PARCIAL;
         nw->color[0] = averageRed;
         nw->color[1] = averageGreen;
         nw->color[2] = averageBlue;
 
         QuadNode *ne = newNode(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
-        averageRed = getAverageRedColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
-        averageGreen = getAverageGreenColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
-        averageBlue = getAverageBlueColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
+        averageRed = getAverageColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1, getRedColor);
+        averageGreen = getAverageColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1, getGreenColor);
+        averageBlue = getAverageColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1, getBlueColor);
         ne->status = PARCIAL;
         ne->color[0] = averageRed;
         ne->color[1] = averageGreen;
         ne->color[2] = averageBlue;
 
         QuadNode *sw = newNode(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
-        averageRed = getAverageRedColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
-        averageGreen = getAverageGreenColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
-        averageBlue = getAverageBlueColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
+        averageRed = getAverageColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset, getRedColor);
+        averageGreen = getAverageColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset, getGreenColor);
+        averageBlue = getAverageColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset, getBlueColor);
         sw->status = PARCIAL;
         sw->color[0] = averageRed;
         sw->color[1] = averageGreen;
         sw->color[2] = averageBlue;
 
         QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
-        averageRed = getAverageRedColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
-        averageGreen = getAverageGreenColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
-        averageBlue = getAverageBlueColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
+        averageRed = getAverageColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset, getRedColor);
+        averageGreen = getAverageColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset, getGreenColor);
+        averageBlue = getAverageColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset, getBlueColor);
         se->status = PARCIAL;
         se->color[0] = averageRed;
         se->color[1] = averageGreen;
