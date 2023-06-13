@@ -163,51 +163,56 @@ int getIndex(int row, int column, int width)
 
 void separeTree(QuadNode *node, int minError)
 {
-    int averageRed = getAverageRedColor(node->x, node->y, node->width, node->height);
-    int averageBlue = getAverageBlueColor(node->x, node->y, node->width, node->height);
-    int averageGreen = getAverageGreenColor(node->x, node->y, node->width, node->height);
+    int averageRed;
+    int averageBlue;
+    int averageGreen;
 
     int *histogram = generateHistogram(node->x, node->y, node->width, node->height);
 
     int error = getZoneError(histogram, node->x, node->y, node->width, node->height);
+
     int halfWidth = (node->width) / 2;
     int halfHeight = (node->height) / 2;
-    int x = node->x;
-    int y = node->y;
 
     if (error > minError && halfHeight != 0 && halfWidth != 0)
     {
-        QuadNode *nw = newNode(x, y, halfWidth, halfHeight);
-        averageRed = getAverageRedColor(x, y, halfWidth, halfHeight);
-        averageGreen = getAverageGreenColor(x, y, halfWidth, halfHeight);
-        averageBlue = getAverageBlueColor(x, y, halfWidth, halfHeight);
+        int x = node->x;
+        int y = node->y;
+
+        int widthOffset = ((int)node->width) % 2;
+        int heightOffset = ((int)node->height) % 2;
+
+        QuadNode *nw = newNode(x, y, halfWidth + 1, halfHeight + 1);
+        averageRed = getAverageRedColor(x, y, halfWidth + 1, halfHeight + 1);
+        averageGreen = getAverageGreenColor(x, y, halfWidth + 1, halfHeight + 1);
+        averageBlue = getAverageBlueColor(x, y, halfWidth + 1, halfHeight + 1);
         nw->status = PARCIAL;
         nw->color[0] = averageRed;
         nw->color[1] = averageGreen;
         nw->color[2] = averageBlue;
 
-        QuadNode *ne = newNode(x + halfWidth, y, halfWidth, halfHeight);
-        averageRed = getAverageRedColor(x + halfWidth, y, halfWidth, halfHeight);
-        averageGreen = getAverageGreenColor(x + halfWidth, y, halfWidth, halfHeight);
-        averageBlue = getAverageBlueColor(x + halfWidth, y, halfWidth, halfHeight);
+        QuadNode *ne = newNode(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
+        averageRed = getAverageRedColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
+        averageGreen = getAverageGreenColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
+        averageBlue = getAverageBlueColor(x + halfWidth, y, halfWidth + widthOffset, halfHeight + 1);
         ne->status = PARCIAL;
         ne->color[0] = averageRed;
         ne->color[1] = averageGreen;
         ne->color[2] = averageBlue;
 
-        QuadNode *sw = newNode(x, y + halfHeight, halfWidth, halfHeight);
-        averageRed = getAverageRedColor(x, y + halfHeight, halfWidth, halfHeight);
-        averageGreen = getAverageGreenColor(x, y + halfHeight, halfWidth, halfHeight);
-        averageBlue = getAverageBlueColor(x, y + halfHeight, halfWidth, halfHeight);
+        QuadNode *sw = newNode(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
+        averageRed = getAverageRedColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
+        averageGreen = getAverageGreenColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
+        averageBlue = getAverageBlueColor(x, y + halfHeight, halfWidth + 1, halfHeight + heightOffset);
         sw->status = PARCIAL;
         sw->color[0] = averageRed;
         sw->color[1] = averageGreen;
         sw->color[2] = averageBlue;
 
-        QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
-        averageRed = getAverageRedColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
-        averageGreen = getAverageGreenColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
-        averageBlue = getAverageBlueColor(x + halfWidth, y + halfHeight, halfWidth, halfHeight);
+        QuadNode *se = newNode(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
+        averageRed = getAverageRedColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
+        averageGreen = getAverageGreenColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
+        averageBlue = getAverageBlueColor(x + halfWidth, y + halfHeight, halfWidth + widthOffset, halfHeight + heightOffset);
         se->status = PARCIAL;
         se->color[0] = averageRed;
         se->color[1] = averageGreen;
@@ -218,6 +223,15 @@ void separeTree(QuadNode *node, int minError)
         node->SW = sw;
         node->SE = se;
 
+        if (halfHeight == 1 || halfWidth == 1)
+        {
+            node->NW->status = CHEIO;
+            node->NE->status = CHEIO;
+            node->SW->status = CHEIO;
+            node->SE->status = CHEIO;
+            return;
+        }
+
         separeTree(node->NW, minError);
         separeTree(node->NE, minError);
         separeTree(node->SW, minError);
@@ -227,6 +241,7 @@ void separeTree(QuadNode *node, int minError)
     {
         node->status = CHEIO;
     }
+
     free(histogram);
 }
 
