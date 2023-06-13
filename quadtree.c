@@ -89,7 +89,7 @@ int getGrayTone(int r, int g, int b)
 
 int getAverageColor(int x, int y, int width, int height, int (*getColor)(int, int))
 {
-    long intensitySum = 0;
+    unsigned long intensitySum = 0;
 
     for (int row = y; row < y + height; row++)
     {
@@ -120,7 +120,7 @@ int getZoneError(int histogram[], int x, int y, int width, int height)
 {
     int averageI = averageIntensity(histogram);
     int grayTone;
-    long long sum = 0;
+    unsigned long sum = 0;
     for (int row = y; row < y + height; row++)
     {
         for (int column = x; column < x + width; column++)
@@ -130,18 +130,20 @@ int getZoneError(int histogram[], int x, int y, int width, int height)
             sum += pow((grayTone - averageI), 2);
         }
     }
+
     return sum / (width * height);
 }
 
 int averageIntensity(int histogram[])
 {
-    long long sum = 0;
+    unsigned long sum = 0;
     int quantity = 0;
     for (int i = 0; i < 256; i++)
     {
         sum += histogram[i] * i;
         quantity += histogram[i];
     }
+
     return sum / quantity;
 }
 
