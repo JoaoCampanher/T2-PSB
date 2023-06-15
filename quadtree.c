@@ -297,8 +297,9 @@ void drawNode(QuadNode *n)
     {
         if (desenhaBorda)
         {
+            GLubyte blue[] = {0, 0, 255};
             glBegin(GL_LINE_LOOP);
-            glColor3ubv(n->color);
+            glColor3ubv(blue);
             glVertex2f(n->x, n->y);
             glVertex2f(n->x + n->width - 1, n->y);
             glVertex2f(n->x + n->width - 1, n->y + n->height - 1);
