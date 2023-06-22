@@ -131,7 +131,7 @@ int getZoneError(int histogram[], int x, int y, int width, int height)
         }
     }
 
-    return sum / (width * height);
+    return sqrt(sum / (width * height));
 }
 
 int averageIntensity(int histogram[])
